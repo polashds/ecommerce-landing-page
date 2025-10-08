@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Check, AlertCircle } from 'lucide-react';
 
-// Mock API service (replace with actual API calls)
-const api = {
-  subscribeNewsletter: async (email) => {
-    // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ message: 'Successfully subscribed!' });
-      }, 1000);
-    });
-  },
-};
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
@@ -35,13 +25,26 @@ const Newsletter = () => {
     setStatus({ type: '', message: '' });
 
     try {
-      const result = await api.subscribeNewsletter(email);
-      setStatus({ type: 'success', message: result.message });
-      setEmail('');
+      const response = await fetch(`${API_BASE_URL}/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStatus({ type: 'success', message: data.message });
+        setEmail('');
+      } else {
+        setStatus({ type: 'error', message: data.error || 'Failed to subscribe. Please try again.' });
+      }
     } catch (error) {
       setStatus({ 
         type: 'error', 
-        message: error.response?.data?.error || 'Failed to subscribe. Please try again.' 
+        message: 'Failed to subscribe. Please try again.' 
       });
     } finally {
       setLoading(false);

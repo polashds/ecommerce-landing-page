@@ -1,88 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ProductCard from './ProductCard';
 
-// Mock API service (replace with actual API calls)
-const api = {
-  getProducts: async (filters = {}) => {
-    // Sample product data
-    const products = [
-      {
-        _id: '1',
-        name: 'Classic White T-Shirt',
-        description: 'Premium cotton blend for ultimate comfort',
-        price: 29.99,
-        category: 'Men',
-        image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
-        featured: true,
-      },
-      {
-        _id: '2',
-        name: 'Denim Jacket',
-        description: 'Vintage style denim with modern fit',
-        price: 89.99,
-        category: 'Men',
-        image_url: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=400',
-        featured: true,
-      },
-      {
-        _id: '3',
-        name: 'Summer Dress',
-        description: 'Lightweight and breezy for warm days',
-        price: 59.99,
-        category: 'Women',
-        image_url: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
-        featured: true,
-      },
-      {
-        _id: '4',
-        name: 'Sneakers',
-        description: 'Comfortable all-day wear',
-        price: 79.99,
-        category: 'Footwear',
-        image_url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400',
-        featured: false,
-      },
-      {
-        _id: '5',
-        name: 'Leather Bag',
-        description: 'Elegant and spacious',
-        price: 129.99,
-        category: 'Accessories',
-        image_url: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400',
-        featured: true,
-      },
-      {
-        _id: '6',
-        name: 'Wool Sweater',
-        description: 'Cozy knit for cold weather',
-        price: 69.99,
-        category: 'Women',
-        image_url: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400',
-        featured: false,
-      },
-    ];
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let filtered = products;
-        if (filters.category) {
-          filtered = filtered.filter(p => p.category === filters.category);
-        }
-        if (filters.featured !== undefined) {
-          filtered = filtered.filter(p => p.featured === (filters.featured === 'true'));
-        }
-        resolve({ products: filtered, count: filtered.length });
-      }, 500);
-    });
-  },
-  getCategories: async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ categories: ['Men', 'Women', 'Footwear', 'Accessories'] });
-      }, 300);
-    });
-  },
-};
+//const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -93,11 +13,16 @@ const Products = () => {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const filters = selectedCategory === 'all' ? {} : { category: selectedCategory };
-      const data = await api.getProducts(filters);
-      setProducts(data.products);
+      const url = selectedCategory === 'all' 
+        ? `${API_BASE_URL}/products`
+        : `${API_BASE_URL}/products?category=${selectedCategory}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      setProducts(data.products || []);
     } catch (error) {
       console.error('Error loading products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -105,10 +30,12 @@ const Products = () => {
 
   const loadCategories = async () => {
     try {
-      const data = await api.getCategories();
-      setCategories(['All', ...data.categories]);
+      const response = await fetch(`${API_BASE_URL}/categories`);
+      const data = await response.json();
+      setCategories(['All', ...(data.categories || [])]);
     } catch (error) {
       console.error('Error loading categories:', error);
+      setCategories(['All']);
     }
   };
 
